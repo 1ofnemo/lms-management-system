@@ -26,6 +26,13 @@ npm run dev
 
 Backend: http://localhost:8000/health · Frontend: http://localhost:5173
 
+Role Email
+student student@test.com
+teacher teacher2@test.com
+admin admin@test.com
+
+all password pass1234
+
 ## Status
 
 Sprint 0 scaffolding only — no models, auth, or routes yet beyond a health check. See the sprint backlog for what's next.

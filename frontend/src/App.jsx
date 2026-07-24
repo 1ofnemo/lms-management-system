@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import api from "./api";
+import { Routes, Route, Navigate, Link } from "react-router-dom";
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import ManageTopics from "./pages/ManageTopics";
+import RequireRole from "./components/RequireRole";
 
 function Navbar() {
   return (
@@ -8,13 +12,14 @@ function Navbar() {
         <span className="navbar-brand">LMS</span>
         <ul className="navbar-nav">
           <li className="nav-item">
-            <span className="nav-link">Dashboard</span>
+            <Link className="nav-link" to="/dashboard">
+              Dashboard
+            </Link>
           </li>
           <li className="nav-item">
-            <span className="nav-link">Topics</span>
-          </li>
-          <li className="nav-item">
-            <span className="nav-link">Assignments</span>
+            <Link className="nav-link" to="/topics">
+              Topics
+            </Link>
           </li>
         </ul>
       </div>
@@ -35,16 +40,18 @@ function App() {
   return (
     <>
       <Navbar />
-      <div className="container py-4">
-        <p>
-          Backend status:{" "}
-          <span
-            className={`badge ${apiStatus === "ok" ? "bg-success" : "bg-secondary"}`}
-          >
-            {apiStatus}
-          </span>
-        </p>
-      </div>
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/login" element={<Login />} />
+
+        <Route element={<RequireRole />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+        </Route>
+
+        <Route element={<RequireRole roles={["teacher", "admin"]} />}>
+          <Route path="/topics" element={<ManageTopics />} />
+        </Route>
+      </Routes>
     </>
   );
 }

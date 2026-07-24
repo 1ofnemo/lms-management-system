@@ -6,4 +6,5 @@ psycopg[binary]
 pydantic-settings
 python-jose[cryptography]
 passlib[bcrypt]
+bcrypt<4.1  # passlib 1.7.4 doesn't support bcrypt's post-4.1 backend interface
 anthropic
