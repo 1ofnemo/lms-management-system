@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import api, { getCurrentUser } from "./api";
-import { Routes, Route, Navigate, Link, useNavigate, useLocation } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  Navigate,
+  Link,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
 
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -8,6 +15,8 @@ import ManageTopics from "./pages/ManageTopics";
 import ManageAssignments from "./pages/ManageAssignments";
 import RequireRole from "./components/RequireRole";
 import ClassOverview from "./pages/ClassOverview";
+import MyAssignments from "./pages/MyAssignments";
+import Submissions from "./pages/Submissions";
 
 function Navbar() {
   const navigate = useNavigate();
@@ -46,9 +55,22 @@ function Navbar() {
               Class Overview
             </Link>
           </li>
+          <li className="nav-item">
+            <Link className="nav-link" to="/my-assignments">
+              My Assignments
+            </Link>
+          </li>
+          <li className="nav-item">
+            <Link className="nav-link" to="/submissions">
+              Submissions
+            </Link>
+          </li>
         </ul>
         {user && location.pathname !== "/login" && (
-          <button className="btn btn-outline-light btn-sm" onClick={handleLogout}>
+          <button
+            className="btn btn-outline-light btn-sm"
+            onClick={handleLogout}
+          >
             Logout
           </button>
         )}
@@ -82,6 +104,11 @@ function App() {
           <Route path="/topics" element={<ManageTopics />} />
           <Route path="/assignments" element={<ManageAssignments />} />
           <Route path="/class-overview" element={<ClassOverview />} />
+          <Route path="/submissions" element={<Submissions />} />
+        </Route>
+
+        <Route element={<RequireRole roles={["student"]} />}>
+          <Route path="/my-assignments" element={<MyAssignments />} />
         </Route>
       </Routes>
     </>

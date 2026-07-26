@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from sqlalchemy.orm import Session
 
 from app.db import get_db
@@ -17,6 +17,14 @@ class AssignmentIn(BaseModel):
     type: str
     prompt: str
     rubric: dict
+
+    @field_validator("rubric") #validation to ensure rubric criterion only + up to 1.0 
+    @classmethod
+    def weights_sum_to_one(cls, rubric):
+        total = sum(c.get("weight", 0) for c in rubric.get("criteria", []))
+        if abs(total - 1) > 0.01:
+            raise ValueError(f"Rubric weights must sum up to 1, but got {total} instead")
+        return rubric
 
 class AssignmentOut(BaseModel):
     id: int

@@ -48,3 +48,15 @@ class MasteryScore(Base):
     updated_at: Mapped[datetime] = mapped_column (
         DateTime, server_default=func.now(), onupdate=func.now()
     )
+
+class Submission(Base):
+    __tablename__ = "submissions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    student_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    assignment_id: Mapped[int] = mapped_column(ForeignKey("assignments.id"), nullable=False)
+    answer: Mapped[str] = mapped_column(Text, nullable=False)
+    score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    feedback: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    graded_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    status: Mapped[str] = mapped_column(nullable=False, server_default="pending")

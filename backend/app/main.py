@@ -5,6 +5,7 @@ from app.auth import router as auth_router
 from app.topics import router as topics_router
 from app.assignments import router as assignment_router
 from app.progress import router  as progress_router
+from app.submissions import router as submissions_router
 
 app = FastAPI(title="LMS API")
 
@@ -25,3 +26,4 @@ app.include_router(auth_router)
 app.include_router(topics_router)
 app.include_router(assignment_router)
 app.include_router(progress_router)
+app.include_router(submissions_router)

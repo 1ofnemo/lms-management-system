@@ -6,5 +6,11 @@ The tradeoff: when Sprint 3's grading pipeline eventually lands, you'll add one 
 Two gaps I'm filling in that aren't literally spelled out in the backlog: (1) a GET /progress (no id, teacher/admin-only) endpoint that returns all students at once, since the backlog only defines the single-student GET /progress/{student_id}; (2) trend is scoped out entirely for this build — mastery_scores only stores a current value, not history, and the grid only needs bucket for the badge color anyway.
 
 Use case notes:
-MCQ needs a different UI and logic for testing
-Need to populate class overview more properly
+
+- MCQ needs a different UI and logic for testing
+- Need to populate class overview more properly (for database)
+- Add criterion description and link that to grading (alt see if a teacher can literally upload a pdf.docx and it gets translated to a criterion list)
+- Add frontend error handlers and display messages
+- NEED to restrict the following for frontend:
+  1. All tabs invisible in login.
+  2. Restrict tab views based on role of the user logged in
