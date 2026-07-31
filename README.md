@@ -79,13 +79,3 @@ All passwords: `pass1234`
 
 21 more students exist across the same three groups (24 total, 8 per bucket) — see
 `backend/scripts/seed_demo_dataset.py` for the full roster.
-
-## Status
-
-Sprints 0-5 complete: auth, content model (topics/assignments), AI-graded submissions,
-mastery tracking with bucketing + trend, and DAG-based roadmap recommendation (including a
-visual prerequisite graph and score/insights charts on the student dashboard). Sprint 6
-(this hardening pass): seed data, this README, and a verified from-scratch bootstrap are
-done (which also caught and fixed a typo in an old migration -- `sa.lumn` instead of
-`sa.Column` -- that had never been exercised against a truly empty database before now).
-Manual QA pass and demo script are still open. See the sprint backlog artifact for full detail.
