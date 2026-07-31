@@ -77,11 +77,23 @@ echo [2/5] Setting up backend virtual environment...
 cd backend
 if not exist .venv (
     python -m venv .venv
+    if errorlevel 1 (
+        echo [ERROR] Failed to create the virtual environment, see above.
+        pause
+        exit /b 1
+    )
 )
 call .venv\Scripts\activate.bat
 
+if not exist .venv\Scripts\pip.exe (
+    echo [ERROR] .venv exists but has no pip - it's likely broken from a previous failed run.
+    echo Delete the backend\.venv folder and re-run this script.
+    pause
+    exit /b 1
+)
+
 echo [3/5] Installing backend packages...
-pip install -r requirements.txt --quiet
+python -m pip install -r requirements.txt --quiet
 if errorlevel 1 (
     echo [ERROR] pip install failed, see above.
     pause
