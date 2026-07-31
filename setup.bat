@@ -8,8 +8,6 @@ echo  and seeds demo data. Safe to re-run.
 echo ============================================
 echo.
 
-set NEEDS_RESTART=0
-
 where winget >nul 2>&1
 if errorlevel 1 (
     echo [ERROR] winget ^(Windows Package Manager^) was not found, so Python/Node.js can't be auto-installed.
@@ -18,25 +16,57 @@ if errorlevel 1 (
     exit /b 1
 )
 
-where python >nul 2>&1
+rem `where python` alone is unreliable: Windows ships a fake python.exe "stub" (the
+rem App Execution Alias in WindowsApps) on machines with no real Python installed, and
+rem `where` finds it happily even though running it does nothing but redirect to the
+rem Microsoft Store. Checking `python --version` actually invokes it, so the stub's
+rem failure is caught instead of being mistaken for a real install.
+set NEEDS_INSTALL=0
+
+python --version >nul 2>&1
 if errorlevel 1 (
     echo Python not found — installing via winget...
     winget install -e --id Python.Python.3.13 --silent --accept-package-agreements --accept-source-agreements
-    set NEEDS_RESTART=1
+    set NEEDS_INSTALL=1
 )
 
-where npm >nul 2>&1
+npm --version >nul 2>&1
 if errorlevel 1 (
     echo Node.js not found — installing via winget...
     winget install -e --id OpenJS.NodeJS.LTS --silent --accept-package-agreements --accept-source-agreements
-    set NEEDS_RESTART=1
+    set NEEDS_INSTALL=1
 )
 
-if "%NEEDS_RESTART%"=="1" (
-    echo.
-    echo Some tools were just installed. Close this window, then double-click setup.bat again to continue.
-    pause
-    exit /b 0
+if "%NEEDS_INSTALL%"=="1" (
+    rem A freshly installed tool isn't on THIS window's PATH yet - Windows only updates
+    rem PATH for new processes launched after the install, and this window already
+    rem started. Rebuilding PATH from the registry here (instead of asking the user to
+    rem close and reopen) picks the change up immediately in this same session.
+    echo Refreshing this window's PATH so newly installed tools are recognized...
+    for /f "usebackq skip=2 tokens=2,*" %%A in (`reg query "HKCU\Environment" /v Path 2^>nul`) do set "USER_PATH=%%B"
+    for /f "usebackq skip=2 tokens=2,*" %%A in (`reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v Path`) do set "SYS_PATH=%%B"
+    rem Registry PATH values are REG_EXPAND_SZ and can contain literal tokens like
+    rem %SystemRoot% instead of the real path. A plain `set` only substitutes once, so
+    rem those tokens would end up in PATH unexpanded. `call set` re-parses the line,
+    rem giving a second substitution pass that resolves them.
+    call set "SYS_PATH=%SYS_PATH%"
+    call set "USER_PATH=%USER_PATH%"
+    set "PATH=%SYS_PATH%;%USER_PATH%"
+
+    python --version >nul 2>&1
+    if errorlevel 1 (
+        echo [ERROR] Python still isn't available after installing it. Close this window, run setup.bat
+        echo again, and if it still fails, install manually: https://www.python.org/downloads/
+        pause
+        exit /b 1
+    )
+    npm --version >nul 2>&1
+    if errorlevel 1 (
+        echo [ERROR] Node.js still isn't available after installing it. Close this window, run setup.bat
+        echo again, and if it still fails, install manually: https://nodejs.org/
+        pause
+        exit /b 1
+    )
 )
 
 where docker >nul 2>&1
