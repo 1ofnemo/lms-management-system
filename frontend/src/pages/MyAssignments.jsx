@@ -6,9 +6,14 @@ function MyAssignments() {
   const [selectedId, setSelectedId] = useState("");
   const [answer, setAnswer] = useState("");
   const [file, setFile] = useState(null);
+  const [mcqChoice, setMcqChoice] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+
+  const selectedAssignment = assignments.find(
+    (a) => String(a.id) === String(selectedId),
+  );
 
   useEffect(() => {
     api.get("/assignments").then((res) => setAssignments(res.data));
@@ -26,7 +31,9 @@ function MyAssignments() {
     try {
       const formData = new FormData();
       formData.append("assignment_id", selectedId);
-      if (file) {
+      if (selectedAssignment?.type === "mcq") {
+        formData.append("answer", mcqChoice);
+      } else if (file) {
         formData.append("file", file);
       } else {
         formData.append("answer", answer);
@@ -49,7 +56,12 @@ function MyAssignments() {
         <select
           className="form-select"
           value={selectedId}
-          onChange={(e) => setSelectedId(e.target.value)}
+          onChange={(e) => {
+            setSelectedId(e.target.value);
+            setAnswer("");
+            setFile(null);
+            setMcqChoice("");
+          }}
         >
           <option value="">Select an assignment…</option>
           {assignments.map((a) => (
@@ -60,30 +72,58 @@ function MyAssignments() {
         </select>
       </div>
 
-      <div className="mb-3">
-        <label className="form-label">Type your answer</label>
-        <textarea
-          className="form-control"
-          rows="6"
-          value={answer}
-          disabled={!!file}
-          onChange={(e) => setAnswer(e.target.value)}
-        />
-      </div>
+      {selectedAssignment?.type === "mcq" ? (
+        <div className="mb-3">
+          <label className="form-label">Select an answer</label>
+          {selectedAssignment.rubric.options.map((opt, i) => (
+            <div className="form-check" key={i}>
+              <input
+                className="form-check-input"
+                type="radio"
+                name="mcqChoice"
+                checked={mcqChoice === opt}
+                onChange={() => setMcqChoice(opt)}
+              />
+              <label className="form-check-label">{opt}</label>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <>
+          <div className="mb-3">
+            <label className="form-label">Type your answer</label>
+            <textarea
+              className="form-control"
+              rows="6"
+              value={answer}
+              disabled={!!file}
+              onChange={(e) => setAnswer(e.target.value)}
+            />
+          </div>
 
-      <div className="mb-3">
-        <label className="form-label">…or upload a file (PDF or .docx)</label>
-        <input
-          type="file"
-          className="form-control"
-          accept=".pdf,.docx"
-          onChange={handleFileChange}
-        />
-      </div>
+          <div className="mb-3">
+            <label className="form-label">
+              …or upload a file (PDF or .docx)
+            </label>
+            <input
+              type="file"
+              className="form-control"
+              accept=".pdf,.docx"
+              onChange={handleFileChange}
+            />
+          </div>
+        </>
+      )}
 
       <button
         className="btn btn-primary"
-        disabled={!selectedId || (!answer && !file) || submitting}
+        disabled={
+          !selectedId ||
+          (selectedAssignment?.type === "mcq"
+            ? !mcqChoice
+            : !answer && !file) ||
+          submitting
+        }
         onClick={handleSubmit}
       >
         {submitting ? "Grading…" : "Submit"}

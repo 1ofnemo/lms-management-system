@@ -8,6 +8,7 @@ from app.models import Assignment, Submission, User
 from app.dependencies import require_roles
 from app.grading import grade_submission_with_retry
 from app.extraction import extract_text
+from app.mastery import recompute_mastery
 
 router = APIRouter(prefix="/submissions", tags=["submissions"])
 
@@ -56,25 +57,41 @@ def create_submission(
         raise HTTPException(400, "Please provide either an answer or a file")
     if answer and file:
         raise HTTPException(400, "Provide either an answer or a file, not both")
-
+    if assignment.type =="mcq" and file:
+        raise HTTPException(400, "MCQ assignments don't accept file uploads")
     if file:
         answer = extract_text(file)
 
     submission = Submission(student_id=user["id"], assignment_id=assignment_id, answer=answer)
 
     assert answer is not None
-    result = grade_submission_with_retry(assignment.prompt, assignment.rubric, answer)
-    if result is None:
-        submission.status = "needs_manual_review"
-    else:
-        submission.score = result["total"]
-        submission.feedback = result
+    if assignment.type == "mcq":
+        correct = assignment.rubric.get("correct_answer")
+        is_correct = answer.strip() == str(correct).strip()
+        submission.score = 1.0 if is_correct else 0.0
+        submission.feedback = {
+            "criterion_scores": [{"criterion": "Correct answer", "score": submission.score}],
+            "total": submission.score,
+            "strengths": ["Correct answer selected"] if is_correct else [],
+            "gaps": [] if is_correct else [f"Correct answer was: {correct}"],
+            "next_step": "" if is_correct else "Review this topic and try again.",
+        }
         submission.graded_at = datetime.now(timezone.utc)
         submission.status = "graded"
-
+    else:
+        result = grade_submission_with_retry(assignment.prompt, assignment.rubric, answer)
+        if result is None:
+            submission.status = "needs_manual_review"
+        else:
+            submission.score = result["total"]
+            submission.feedback = result
+            submission.graded_at = datetime.now(timezone.utc)
+            submission.status = "graded"
     db.add(submission)
     db.commit()
     db.refresh(submission)
+    if submission.status == "graded":
+        recompute_mastery(db, submission.student_id, assignment.topic_id)
     return submission
 
 @router.get(
@@ -110,10 +127,14 @@ def list_submissions(db: Session = Depends(get_db)):
 )
 def override_submission(
     submission_id: int, body: SubmissionOverride, db: Session = Depends(get_db)
-): 
+):
     submission = db.get(Submission, submission_id)
     if not submission: 
         raise HTTPException(404, "Submission not found")
+
+    assignment = db.get(Assignment, submission.assignment_id)
+    if not assignment:
+        raise HTTPException(404, "Assignment not found")
 
     submission.score = body.score
     submission.feedback = body.feedback
@@ -122,4 +143,5 @@ def override_submission(
 
     db.commit()
     db.refresh(submission)
+    recompute_mastery(db, submission.student_id, assignment.topic_id)
     return submission

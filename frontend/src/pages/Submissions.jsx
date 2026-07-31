@@ -9,6 +9,8 @@ const STATUS_BADGE = {
 
 function Submissions() {
   const [submissions, setSubmissions] = useState([]);
+  const [studentFilter, setStudentFilter] = useState("");
+  const [assignmentFilter, setAssignmentFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null);
   const [score, setScore] = useState(0);
@@ -21,6 +23,20 @@ function Submissions() {
   }
 
   useEffect(loadData, []);
+
+  const students = [
+    ...new Map(submissions.map((s) => [s.student_id, s.student_name])).entries(),
+  ].sort((a, b) => a[1].localeCompare(b[1]));
+
+  const assignments = [
+    ...new Map(submissions.map((s) => [s.assignment_id, s.assignment_prompt])).entries(),
+  ];
+
+  const filteredSubmissions = submissions.filter(
+    (s) =>
+      (!studentFilter || s.student_id === Number(studentFilter)) &&
+      (!assignmentFilter || s.assignment_id === Number(assignmentFilter)),
+  );
 
   function openEditModal(submission) {
     setEditing(submission);
@@ -48,6 +64,41 @@ function Submissions() {
     <div className="container py-4">
       <h1 className="h4 mb-3">Submissions</h1>
 
+      <div className="row g-2 mb-3">
+        <div className="col-sm-4">
+          <select
+            className="form-select"
+            value={studentFilter}
+            onChange={(e) => setStudentFilter(e.target.value)}
+          >
+            <option value="">All students</option>
+            {students.map(([id, name]) => (
+              <option key={id} value={id}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="col-sm-6">
+          <select
+            className="form-select"
+            value={assignmentFilter}
+            onChange={(e) => setAssignmentFilter(e.target.value)}
+          >
+            <option value="">All assignments</option>
+            {assignments.map(([id, prompt]) => (
+              <option key={id} value={id}>
+                {prompt.slice(0, 60)}
+                {prompt.length > 60 ? "…" : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="col-sm-2 d-flex align-items-center text-muted small">
+          {filteredSubmissions.length} of {submissions.length}
+        </div>
+      </div>
+
       <table className="table">
         <thead>
           <tr>
@@ -59,7 +110,7 @@ function Submissions() {
           </tr>
         </thead>
         <tbody>
-          {submissions.map((s) => (
+          {filteredSubmissions.map((s) => (
             <tr key={s.id}>
               <td>{s.student_name}</td>
               <td>

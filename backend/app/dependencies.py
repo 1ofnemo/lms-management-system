@@ -20,3 +20,7 @@ def require_roles(*roles: str):
         return user
     return checker
 
+def ensure_can_view_student(user: dict, student_id: int) -> None:
+    if user["role"] == "student" and user["id"] != student_id:
+        raise HTTPException(403, "Not authorized")
+

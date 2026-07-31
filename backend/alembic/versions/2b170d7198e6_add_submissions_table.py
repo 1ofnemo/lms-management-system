@@ -25,7 +25,7 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('student_id', sa.Integer(), nullable=False),
     sa.Column('assignment_id', sa.Integer(), nullable=False),
-    sa.lumn('answer', sa.Text(), nullable=False),
+    sa.Column('answer', sa.Text(), nullable=False),
     sa.Column('score', sa.Float(), nullable=True),
     sa.Column('feedback', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     sa.Column('graded_at', sa.DateTime(), nullable=True),

@@ -6,6 +6,8 @@ function ManageAssignments() {
   const [topics, setTopics] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [criteria, setCriteria] = useState([{ criterion: "", weight: 0 }]);
+  const [options, setOptions] = useState(["", ""]);
+  const [correctAnswer, setCorrectAnswer] = useState("");
 
   const [editingAssignment, setEditingAssignment] = useState(null);
   const [topicId, setTopicId] = useState("");
@@ -35,12 +37,26 @@ function ManageAssignments() {
     setCriteria(criteria.filter((_, i) => i !== index));
   }
 
+  function updateOption(index, value) {
+    setOptions(options.map((o, i) => (i === index ? value : o)));
+  }
+
+  function addOptionRow() {
+    setOptions([...options, ""]);
+  }
+
+  function removeOptionRow(index) {
+    setOptions(options.filter((_, i) => i !== index));
+  }
+
   function openCreateModal() {
     setEditingAssignment(null);
     setTopicId("");
     setType("essay");
     setPrompt("");
     setCriteria([{ criterion: "", weight: 0 }]);
+    setOptions(["", ""]);
+    setCorrectAnswer("");
     setShowModal(true);
   }
 
@@ -50,11 +66,15 @@ function ManageAssignments() {
     setType(a.type);
     setPrompt(a.prompt);
     setCriteria(a.rubric.criteria ?? [{ criterion: "", weight: 0 }]);
+    setOptions(a.rubric.options ?? ["", ""]);
+    setCorrectAnswer(a.rubric.correct_answer ?? "");
     setShowModal(true);
   }
 
   async function handleSubmit() {
-    const body = { topic_id: topicId, type, prompt, rubric: { criteria } };
+    const rubric =
+      type === "mcq" ? { options, correct_answer: correctAnswer } : { criteria };
+    const body = { topic_id: topicId, type, prompt, rubric };
     if (editingAssignment) {
       await api.put(`/assignments/${editingAssignment.id}`, body);
     } else {
@@ -100,9 +120,16 @@ function ManageAssignments() {
                 {a.prompt.length > 60 ? "…" : ""}
               </td>
               <td>
-                {a.rubric.criteria
-                  ?.map((c) => `${c.criterion} (${c.weight})`)
-                  .join(", ")}
+                {a.type === "mcq"
+                  ? a.rubric.options
+                      ?.map(
+                        (o) =>
+                          `${o}${o === a.rubric.correct_answer ? " ✓" : ""}`,
+                      )
+                      .join(", ")
+                  : a.rubric.criteria
+                      ?.map((c) => `${c.criterion} (${c.weight})`)
+                      .join(", ")}
               </td>
               <td>
                 <button
@@ -174,47 +201,95 @@ function ManageAssignments() {
                       onChange={(e) => setPrompt(e.target.value)}
                     />
                   </div>
-                  <div className="mb-3">
-                    <label className="form-label">Rubric</label>
-                    {criteria.map((row, i) => (
-                      <div className="d-flex gap-2 mb-2" key={i}>
-                        <input
-                          className="form-control"
-                          placeholder="Criterion"
-                          value={row.criterion}
-                          onChange={(e) =>
-                            updateCriterion(i, "criterion", e.target.value)
-                          }
-                        />
-                        <input
-                          type="number"
-                          step="0.1"
-                          className="form-control"
-                          style={{ maxWidth: 100 }}
-                          placeholder="Weight"
-                          value={row.weight}
-                          onChange={(e) =>
-                            updateCriterion(i, "weight", Number(e.target.value))
-                          }
-                        />
-                        <button
-                          type="button"
-                          className="btn btn-outline-danger"
-                          onClick={() => removeCriterionRow(i)}
-                          disabled={criteria.length === 1}
+                  {type === "essay" && (
+                    <div className="mb-3">
+                      <label className="form-label">Rubric</label>
+                      {criteria.map((row, i) => (
+                        <div className="d-flex gap-2 mb-2" key={i}>
+                          <input
+                            className="form-control"
+                            placeholder="Criterion"
+                            value={row.criterion}
+                            onChange={(e) =>
+                              updateCriterion(i, "criterion", e.target.value)
+                            }
+                          />
+                          <input
+                            type="number"
+                            step="0.1"
+                            className="form-control"
+                            style={{ maxWidth: 100 }}
+                            placeholder="Weight"
+                            value={row.weight}
+                            onChange={(e) =>
+                              updateCriterion(
+                                i,
+                                "weight",
+                                Number(e.target.value),
+                              )
+                            }
+                          />
+                          <button
+                            type="button"
+                            className="btn btn-outline-danger"
+                            onClick={() => removeCriterionRow(i)}
+                            disabled={criteria.length === 1}
+                          >
+                            &times;
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-secondary"
+                        onClick={addCriterionRow}
+                      >
+                        + Add Criterion
+                      </button>
+                    </div>
+                  )}
+
+                  {type === "mcq" && (
+                    <div className="mb-3">
+                      <label className="form-label">
+                        Options (select the correct one)
+                      </label>
+                      {options.map((opt, i) => (
+                        <div
+                          className="d-flex gap-2 mb-2 align-items-center"
+                          key={i}
                         >
-                          &times;
-                        </button>
-                      </div>
-                    ))}
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-outline-secondary"
-                      onClick={addCriterionRow}
-                    >
-                      + Add Criterion
-                    </button>
-                  </div>
+                          <input
+                            type="radio"
+                            name="correctAnswer"
+                            checked={correctAnswer === opt && opt !== ""}
+                            onChange={() => setCorrectAnswer(opt)}
+                          />
+                          <input
+                            className="form-control"
+                            placeholder={`Option ${i + 1}`}
+                            value={opt}
+                            onChange={(e) => updateOption(i, e.target.value)}
+                          />
+                          <button
+                            type="button"
+                            className="btn btn-outline-danger"
+                            onClick={() => removeOptionRow(i)}
+                            disabled={options.length === 2}
+                          >
+                            &times;
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-secondary"
+                        onClick={addOptionRow}
+                      >
+                        + Add Option
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div className="modal-footer">
                   <button

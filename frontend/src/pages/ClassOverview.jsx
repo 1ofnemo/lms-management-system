@@ -1,11 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../api";
-
-const BADGE_CLASS = {
-  advanced: "bg-success",
-  average: "bg-warning text-dark",
-  struggling: "bg-danger",
-};
+import { BUCKET_BADGE_CLASS, TREND_ICON } from "../masteryDisplay";
 
 function ClassOverview() {
   const [rows, setRows] = useState([]);
@@ -48,8 +43,9 @@ function ClassOverview() {
                 return (
                   <td key={topicId}>
                     {cell && (
-                      <span className={`badge ${BADGE_CLASS[cell.bucket]}`}>
+                      <span className={`badge ${BUCKET_BADGE_CLASS[cell.bucket]}`}>
                         {cell.bucket}
+                        {TREND_ICON[cell.trend]}
                       </span>
                     )}
                   </td>

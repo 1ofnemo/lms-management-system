@@ -45,6 +45,7 @@ class MasteryScore(Base):
     topic_id: Mapped[int] = mapped_column(ForeignKey("topics.id"), nullable=False)
     score: Mapped[float] = mapped_column(Float, nullable=False)
     bucket: Mapped[str] = mapped_column(nullable=False)  # advanced | average | struggling
+    trend: Mapped[str] = mapped_column(nullable=False, server_default="flat")  # rising | falling | flat
     updated_at: Mapped[datetime] = mapped_column (
         DateTime, server_default=func.now(), onupdate=func.now()
     )

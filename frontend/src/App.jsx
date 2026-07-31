@@ -18,6 +18,15 @@ import ClassOverview from "./pages/ClassOverview";
 import MyAssignments from "./pages/MyAssignments";
 import Submissions from "./pages/Submissions";
 
+const NAV_ITEMS = [
+  { to: "/dashboard", label: "Dashboard" },
+  { to: "/topics", label: "Topics", roles: ["teacher", "admin"] },
+  { to: "/assignments", label: "Assignments", roles: ["teacher", "admin"] },
+  { to: "/class-overview", label: "Class Overview", roles: ["teacher", "admin"] },
+  { to: "/my-assignments", label: "My Assignments", roles: ["student"] },
+  { to: "/submissions", label: "Submissions", roles: ["teacher", "admin"] },
+];
+
 function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -28,6 +37,10 @@ function Navbar() {
     navigate("/login");
   }
 
+  const visibleItems = user
+    ? NAV_ITEMS.filter((item) => !item.roles || item.roles.includes(user.role))
+    : [];
+
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
       <div className="container">
@@ -35,36 +48,13 @@ function Navbar() {
           LMS
         </Link>
         <ul className="navbar-nav me-auto">
-          <li className="nav-item">
-            <Link className="nav-link" to="/dashboard">
-              Dashboard
-            </Link>
-          </li>
-          <li className="nav-item">
-            <Link className="nav-link" to="/topics">
-              Topics
-            </Link>
-          </li>
-          <li className="nav-item">
-            <Link className="nav-link" to="/assignments">
-              Assignments
-            </Link>
-          </li>
-          <li className="nav-item">
-            <Link className="nav-link" to="/class-overview">
-              Class Overview
-            </Link>
-          </li>
-          <li className="nav-item">
-            <Link className="nav-link" to="/my-assignments">
-              My Assignments
-            </Link>
-          </li>
-          <li className="nav-item">
-            <Link className="nav-link" to="/submissions">
-              Submissions
-            </Link>
-          </li>
+          {visibleItems.map((item) => (
+            <li className="nav-item" key={item.to}>
+              <Link className="nav-link" to={item.to}>
+                {item.label}
+              </Link>
+            </li>
+          ))}
         </ul>
         {user && location.pathname !== "/login" && (
           <button
